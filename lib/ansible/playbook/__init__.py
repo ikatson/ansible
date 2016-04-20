@@ -465,10 +465,19 @@ class PlayBook(object):
         ansible.callbacks.set_task(self.callbacks, task)
         ansible.callbacks.set_task(self.runner_callbacks, task)
 
-        if task.role_name:
-            name = '%s | %s' % (task.role_name, task.name)
-        else:
-            name = task.name
+        def build_task_display_name(task):
+            """Build a task name considering role dependencies."""
+            if not task.role_name:
+                return task.name
+            dependency_stack = [task.role_name]
+            role_params = task.role_params
+            while 'parent_role' in role_params:
+                role_params = role_params['parent_role']
+                dependency_stack.append(role_params['role'])
+            dependency_stack.reverse()
+            return '%s | %s' % (' > '.join(dependency_stack), task.name)
+
+        name = build_task_display_name(task)
 
         try:
             # v1 HACK: we don't have enough information to template many names

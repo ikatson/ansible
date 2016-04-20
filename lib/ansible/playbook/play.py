@@ -284,6 +284,13 @@ class Play(object):
                     if dependencies is None:
                         dependencies = []
                     for dep in dependencies:
+                        # Add a reference to the parent role.
+                        if isinstance(role, basestring):
+                            parent_role = {'role': role}
+                        else:
+                            parent_role = role
+                        dep['parent_role'] = parent_role
+
                         allow_dupes = False
                         (dep_path,dep_vars) = self._get_role_path(dep)
 
