@@ -290,7 +290,11 @@ class Play(object):
                             parent_role = {'role': role}
                         else:
                             parent_role = role
-                        dep['parent_role'] = parent_role
+                        try:
+                            dep['parent_role'] = parent_role
+                        except TypeError:
+                            # TODO: figure out how to fix this. This happens if dep is a string.
+                            pass
 
                         allow_dupes = False
                         (dep_path,dep_vars) = self._get_role_path(dep)
