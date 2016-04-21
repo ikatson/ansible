@@ -502,7 +502,7 @@ class PlayBook(object):
                 dependency_stack.reverse()
                 bits.append(' > '.join(dependency_stack))
 
-            task_name = task.name or '(no task name)'
+            task_name = task.name.strip()
             bits.extend(['|', task_name])
 
             return ' '.join(bits)
