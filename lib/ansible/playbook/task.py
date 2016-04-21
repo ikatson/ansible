@@ -36,6 +36,7 @@ class Task(object):
         'async_poll_interval', 'async_seconds', 'default_vars', 'first_available_file',
         'items_lookup_plugin', 'items_lookup_terms', 'module_args', 'module_name', 'module_vars',
         'notified_by', 'play', 'play_file_vars', 'play_vars', 'role_name', 'role_params', 'role_vars',
+        'parent_role',
     ] + _t_common
 
     # to prevent typos and such
@@ -43,7 +44,7 @@ class Task(object):
         'async', 'connection', 'include', 'poll',
     ] + _t_common)
 
-    def __init__(self, play, ds, module_vars=None, play_vars=None, play_file_vars=None, role_vars=None, role_params=None, default_vars=None, additional_conditions=None, role_name=None, no_tags=True):
+    def __init__(self, play, ds, module_vars=None, play_vars=None, play_file_vars=None, role_vars=None, role_params=None, default_vars=None, additional_conditions=None, role_name=None, no_tags=True, parent_role=None):
         ''' constructor loads from a task or handler datastructure '''
 
         # meta directives are used to tell things like ansible/playbook to run
@@ -130,6 +131,7 @@ class Task(object):
         self.register     = ds.get('register', None)
         self.environment  = ds.get('environment', play.environment)
         self.role_name    = role_name
+        self.parent_role  = parent_role
         self.no_log       = utils.boolean(ds.get('no_log', "false")) or self.play.no_log
         self.run_once     = utils.boolean(ds.get('run_once', 'false'))
 

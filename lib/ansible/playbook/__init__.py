@@ -465,19 +465,49 @@ class PlayBook(object):
         ansible.callbacks.set_task(self.callbacks, task)
         ansible.callbacks.set_task(self.runner_callbacks, task)
 
-        def build_task_display_name(task):
-            """Build a task name considering role dependencies."""
-            if not task.role_name:
-                return task.name
-            dependency_stack = [task.role_name]
-            role_params = task.role_params
-            while 'parent_role' in role_params:
-                role_params = role_params['parent_role']
-                dependency_stack.append(role_params['role'])
-            dependency_stack.reverse()
-            return '%s | %s' % (' > '.join(dependency_stack), task.name)
+        def build_task_display_name(task, play, inventory, show_play=True,
+                                    show_hosts_pattern=True, show_expanded_hosts=False, show_role_deps=True):
+            """Build a task name considering role dependencies.
+            :param task: the Task instance
+            :param play: the Play instance
+            :param inventory: the Inventory instance
+            :param show_play: if True, will show the play name
+            :param show_hosts_pattern: if True, will show the "hosts" pattern
+            :param show_expanded_hosts: if True, will show to what hosts the "hosts" pattern expanded
+            :param show_role_deps: if True, will show the dependencies of the role recursively
+            :return: a string representation of the task
+            """
 
-        name = build_task_display_name(task)
+            bits = []
+
+            if show_play:
+                bits.append('*%s*' % play.name)
+
+            if show_hosts_pattern:
+                pattern = play.hosts
+                if show_expanded_hosts:
+                    expanded = ','.join(h.name for h in inventory.get_hosts(pattern))
+                    if expanded != pattern:
+                        pattern = '%s -> %s' % (pattern, expanded)
+                bits.append('{%s}' % pattern)
+
+            if task.role_name:
+                dependency_stack = [task.role_name]
+                if show_role_deps:
+                    parent_role = task.parent_role
+                    while parent_role:
+                        dependency_stack.append(parent_role['role'])
+                        parent_role = parent_role.get('parent_role')
+
+                dependency_stack.reverse()
+                bits.append(' > '.join(dependency_stack))
+
+            task_name = task.name or '(no task name)'
+            bits.extend(['|', task_name])
+
+            return ' '.join(bits)
+
+        name = build_task_display_name(task, play, self.inventory)
 
         try:
             # v1 HACK: we don't have enough information to template many names
@@ -736,7 +766,7 @@ class PlayBook(object):
     def _run_play(self, play):
         ''' run a list of tasks for a given pattern, in order '''
 
-        self.callbacks.on_play_start(play.name)
+        self.callbacks.on_play_start('%s {%s}' % (play.name, play.hosts))
         # Get the hosts for this play
         play._play_hosts = self.inventory.list_hosts(play.hosts)
         # if no hosts matches this play, drop out

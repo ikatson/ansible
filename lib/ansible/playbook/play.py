@@ -284,6 +284,7 @@ class Play(object):
                     if dependencies is None:
                         dependencies = []
                     for dep in dependencies:
+
                         # Add a reference to the parent role.
                         if isinstance(role, basestring):
                             parent_role = {'role': role}
@@ -686,7 +687,8 @@ class Play(object):
                     role_params=role_params,
                     default_vars=default_vars,
                     additional_conditions=list(additional_conditions),
-                    role_name=role_name
+                    role_name=role_name,
+                    parent_role=vars.get('parent_role'),
                 )
                 results.append(task)
             else:
